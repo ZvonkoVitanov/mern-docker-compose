@@ -1,14 +1,13 @@
-FROM node:14-slim
-
-WORKDIR /usr/src/app
-
-COPY ./package.json ./
-COPY ./yarn.lock ./
-
-RUN yarn install
-
+# Stage 1: Build React app
+FROM node:20 AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
 COPY . .
+RUN npm run build
 
-EXPOSE 3000
-
-CMD [ "yarn", "start" ]
+# Stage 2: Serve with Nginx
+FROM nginx:stable-alpine
+COPY --from=build /app/build /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
